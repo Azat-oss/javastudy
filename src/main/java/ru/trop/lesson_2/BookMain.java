@@ -11,13 +11,13 @@ public class BookMain {
 
         book1.displayInfo();
 
-        Book book2 = new Book("War and Peace", "Lev Tolstoy",
+        Book book2 = new Book("Война и мир", "Lev Толстой",
                 LocalDate.of(2020,1,1), "novel", 800);
 
         book2.displayInfo();
 
         book2.setCountPage(801);
-        book2.setFullNameAuthor("Leo Tolstoy");
+        book2.setFullNameAuthor("Лев Толстой");
         book2.displayInfo();
 
         Book book3 = new Book("Eugene Onegin","Alexander Pushkin");
