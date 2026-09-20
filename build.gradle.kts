@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("application")
 }
 
 group = "ru.trop"
@@ -12,6 +13,7 @@ repositories {
 val mockitoAgent by configurations.creating
 
 dependencies {
+    implementation("com.oracle.database.jdbc:ojdbc8:19.3.0.0")
     compileOnly("org.projectlombok:lombok:1.18.48")
     annotationProcessor("org.projectlombok:lombok:1.18.48")
 
@@ -26,8 +28,13 @@ dependencies {
     mockitoAgent("org.mockito:mockito-core:5.23.0") {
         isTransitive = false
     }
-
 }
+
+// --- ВОТ ЭТОТ БЛОК Я ДОБАВИЛ/ИСПРАВИЛ ДЛЯ ТЕБЯ ---
+application {
+    mainClass.set("ru.trop.lesson_11.OracleTest")
+}
+// ---------------------------------------------------
 
 tasks.test {
     useJUnitPlatform()
