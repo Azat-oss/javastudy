@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import ru.trop.lesson_11.model.Product;
+import ru.trop.lesson_11.model.User;
 import java.util.List;
 import java.util.ArrayList;
 import java.sql.ResultSet;
@@ -75,6 +76,148 @@ public class CoffeDB {
             if (rs.next()) return rs.getInt(1) == 0;
         }
         return true;
+    }
+
+
+    public static void createUser(Connection conn) throws SQLException {
+        String sql = """
+            CREATE TABLE users (
+                id       NUMBER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                name     VARCHAR2(100) NOT NULL,
+                age    Date NOT NULL,
+                email     VARCHAR2(100),
+                CONSTRAINT chk_email_at CHECK (email IS NULL OR email LIKE '%@%')
+                            )""";
+        try (Statement stmt = conn.createStatement()) {
+            stmt.execute(sql);
+        } catch (SQLException e) {
+            if (e.getErrorCode() == 955) return; // уже есть — ок
+            throw e;
+        }
+    }
+
+    public static int insertUsers(Connection conn, User p) throws SQLException {
+        String sql = "INSERT INTO users (name, age, email) VALUES (?, ?, ?)";
+        try (PreparedStatement ps = conn.prepareStatement(sql, new String[]{"ID"})) {
+            ps.setString(1, p.getName());
+            ps.setDate(2, java.sql.Date.valueOf(p.getAge()));
+            if (p.getEmail() != null) {
+                ps.setString(3, p.getEmail());
+            } else {
+                ps.setNull(3, java.sql.Types.VARCHAR);   // ← явно NULL
+            }
+            ps.executeUpdate();
+            try (ResultSet rs = ps.getGeneratedKeys()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        }
+        return -1;
+    }
+
+    public static boolean isUsersEmpty(Connection conn) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM users";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) return rs.getInt(1) == 0;
+        }
+        return true;
+    }
+
+    public static List<User> getAllUsers(Connection conn) throws SQLException {
+        List<User> list = new ArrayList<>();
+        String sql = "SELECT id, name, age, email FROM USERS ORDER BY id";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            while (rs.next()) {
+                list.add(new User(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getDate("age").toLocalDate(),
+                        rs.getString("email")
+                ));
+            }
+        }
+        return list;
+    }
+
+    public static User getYoungUser(Connection conn) throws SQLException {
+        String sql = "SELECT id, name, age, email FROM users WHERE age = (SELECT MAX(age) FROM users)";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                User user = new User(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getDate("age").toLocalDate(),
+                        rs.getString("email")
+                );
+                System.out.println("Самый молодой: " + user);
+                return user;
+            }
+        }
+        System.out.println("Пользователи не найдены");
+        return null;
+    }
+
+    public static User getOldUser(Connection conn) throws SQLException {
+        String sql = "SELECT id, name, age, email FROM users WHERE age = (SELECT MIN(age) FROM users)";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                User user = new  User(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getDate("age").toLocalDate(),
+                        rs.getString("email")
+                );
+                System.out.println("Самый старший: " + user);
+                return user;
+            }
+        }
+        System.out.println("Пользователи не найдены");
+        return null;
+    }
+
+    public static User getUserEmailNull(Connection conn) throws SQLException {
+        String sql = "SELECT id, name, age, email FROM users WHERE email IS NULL";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                User user = new  User(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getDate("age").toLocalDate(),
+                        rs.getString("email")
+                );
+                System.out.println("Пользователь без email: " + user);
+                return user;
+            }
+        }
+        System.out.println("Пользователи не найдены");
+        return null;
+    }
+
+    public static User getUserBirthDayToday(Connection conn) throws SQLException {
+        String sql = """
+                    SELECT id, name, age, email FROM users 
+                    WHERE EXTRACT(MONTH FROM age) = EXTRACT(MONTH FROM SYSDATE)
+                    AND EXTRACT(DAY FROM age) = EXTRACT(DAY FROM SYSDATE)
+                """;
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                User user = new  User(
+                        rs.getInt("id"),
+                        rs.getString("name"),
+                        rs.getDate("age").toLocalDate(),
+                        rs.getString("email")
+                );
+                System.out.println("С днем рожденья " + user.getName()+"!!!");
+                return user;
+            }
+        }
+        System.out.println("Пользователи не найдены");
+        return null;
     }
 
 
