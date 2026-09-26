@@ -2,6 +2,8 @@ package ru.trop.lesson_11;
 import ru.trop.lesson_11.DataBase.CoffeDB;
 import ru.trop.lesson_11.model.Product;
 import ru.trop.lesson_11.model.User;
+import ru.trop.lesson_11.model.Order;
+import ru.trop.lesson_11.model.OrderItem;
 
 import java.sql.Connection;
 import java.time.LocalDate;
@@ -12,6 +14,9 @@ public class CoffeeShop {
         try (Connection conn = CoffeDB.getConnection()) {
 
             CoffeDB.createTable(conn);
+            CoffeDB.createOrder(conn);
+            CoffeDB.createOrderItems(conn);
+
             System.out.println("Таблица создана ✓");
 
             if (CoffeDB.isEmpty(conn)) {
@@ -57,10 +62,42 @@ public class CoffeeShop {
             User userEmailNull =CoffeDB.getUserEmailNull(conn);
             User userBirthDay =CoffeDB.getUserBirthDayToday(conn);
 
+            // урок 12 Создание заказов
+
+            List<User> users2 = CoffeDB.getAllUsers(conn);
+            int userId = users2.get(0).getId();
+
+            List<Product> products2 = CoffeDB.getAll(conn);
+            int productId = products2.get(0).getId();
+            int quantity = 2;
+
+            int orderId = CoffeDB.insertOrder(conn, userId, LocalDate.now());
+            System.out.println("Заказ создан: №" + orderId);
+
+            CoffeDB.insertOrderItem(conn, orderId, productId, quantity);
+            System.out.println("Товар добавлен в заказ");
+
+            Order order = CoffeDB.getOrderWithItems(conn, orderId);
+            System.out.println("Заказ: " + order);
+
+            List<Order> allOrders = CoffeDB.getAllOrders(conn);
+            System.out.println("\nВсе заказы:");
+            for (Order o : allOrders) {
+                System.out.println(o);
+            }
+
+
 
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+
+
+
+
+
+
 
     }
 }
